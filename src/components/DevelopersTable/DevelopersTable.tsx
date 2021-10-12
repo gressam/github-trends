@@ -1,27 +1,38 @@
-// import { useQuery } from 'react-query';
-import { useEffect, useState } from 'react';
 import { getDevelopers } from 'src/API/api';
 import { IFilter } from 'src/interfaces/IFilter';
 import { IDeveloper } from 'src/interfaces/IDeveloper';
 import { DeveloperItem } from './DeveloperItem/DeveloperItem';
+import { useQuery } from 'react-query';
+import React, { useEffect } from 'react';
 
 type DeveloperTableProps = {
   filters: IFilter;
-}
+};
 
 export const DevelopersTable = (props: DeveloperTableProps): JSX.Element => {
-
-  const [developers, setDevelopers] = useState<IDeveloper[]>([])
+  const query = useQuery('developersRepo', () => getDevelopers(props.filters), { enabled: false });
 
   useEffect(() => {
-    getDevelopers(props.filters).then((data: IDeveloper[]) => setDevelopers(data));
-  }, [props.filters])
+    if (props.filters) {
+      query.refetch();
+    }
+  }, [props.filters]);
 
   return (
     <div className="users-table">
-      {developers.map((user: IDeveloper) => (
-        <DeveloperItem key={user?.username} item={user} />
-      ))}
+      {query?.isLoading || query.isFetching ? (
+        <div>Is Loading...</div>
+      ) : (
+        <React.Fragment>
+          {query?.data?.length ? (
+            query?.data?.map((user: IDeveloper) => (
+              <DeveloperItem key={user?.username} item={user} />
+            ))
+          ) : (
+            <div>No data</div>
+          )}
+        </React.Fragment>
+      )}
     </div>
   );
 };
